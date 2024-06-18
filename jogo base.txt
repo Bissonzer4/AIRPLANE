@@ -1,0 +1,123 @@
+import pygame
+import random
+
+# Inicialização do Pygame
+pygame.init()
+
+# Configurações da tela
+screen_width = 1280
+screen_height = 800
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+# Título e ícone
+pygame.display.set_caption("Flappy Plane")
+
+# Carregar imagens
+bird_img = pygame.image.load("aviao.png")
+pipe_img = pygame.image.load("predio.png")
+pipe2_img = pygame.image.load("nuvem.png")
+background_img = pygame.image.load("cidade.jpg")
+
+# Classe do Jogador (Pássaro)
+class Bird:
+    def __init__(self):
+        self.x = 50
+        self.y = screen_height // 15
+        self.gravity = 0.6
+        self.lift = -15
+        self.velocity = 0
+        self.collision_margin = 10  # Margem de colisão
+
+    def update(self):
+        self.velocity += self.gravity
+        self.velocity *= 0.9
+        self.y += self.velocity
+
+        if self.y > screen_height:
+            self.y = screen_height
+            self.velocity = 0
+
+        if self.y < 0:
+            self.y = 0
+            self.velocity = 0
+
+    def up(self):
+        self.velocity += self.lift
+
+    def show(self):
+        screen.blit(bird_img, (self.x, self.y))
+
+# Classe dos Canos
+class Pipe:
+    def __init__(self):
+        self.spacing = 200
+        self.top = random.randint(50, screen_height - self.spacing - 50)
+        self.bottom = screen_height - self.top - self.spacing
+        self.x = screen_width
+        self.w = 80
+        self.speed = 5
+
+    def update(self):
+        self.x -= self.speed
+
+    def show(self):
+        screen.blit(pipe2_img, (self.x, self.top - pipe2_img.get_height()))
+        screen.blit(pipe_img, (self.x, screen_height - self.bottom))
+
+    def offscreen(self):
+        return self.x < -self.w
+
+# Função do Menu
+def menu():
+    font = pygame.font.Font(None, 36)
+    menu_text = font.render("Pressione ESPAÇO para começar", True, (255, 255, 255))
+    menu_rect = menu_text.get_rect(center=(screen_width // 2, screen_height // 2))
+
+    screen.blit(menu_text, menu_rect)
+    pygame.display.update()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    waiting = False
+
+# Função principal do jogo
+def game():
+    clock = pygame.time.Clock()
+    bird = Bird()
+    pipes = [Pipe()]
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    bird.up()
+
+        bird.update()
+
+        for pipe in pipes:
+            pipe.update()
+            if pipe.offscreen():
+                pipes.remove(pipe)
+                pipes.append(Pipe())
+
+        screen.blit(background_img, (0, 0))
+        bird.show()
+        for pipe in pipes:
+            pipe.show()
+
+        pygame.display.update()
+        clock.tick(30)
+
+# Iniciar o jogo
+menu()
+game()
+pygame.quit()
